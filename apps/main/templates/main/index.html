@@ -1,19 +1,15 @@
 {% extends 'main/base.html' %}
 
-{% block body %}
+{% block pre-auth %}
 
-{% if request.session.user_id %}
-    <h1>User logged in</h1>
+{% if registered %}
+    <div class="container mt-5">
+        <h1 class="text-center">{{registered}} now registered.  Please login.</h1>
+    </div>
 {% else %}
-    {% if registered %}
-        <div class="container mt-5">
-            <h1 class="text-center">{{registered}} now registered.  Please login.</h1>
-        </div>
-    {% else %}
-        <div class="container mt-5">
-            <h1 class="text-center">Login or Register</h1>
-        </div>
-    {% endif %}
+    <div class="container mt-5">
+        <h1 class="text-center">Login or Register</h1>
+    </div>
 {% endif %}
 
 {% endblock %}

@@ -5,12 +5,13 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 
 def index(request):
+    if ('user_id' in request.session):
+        return redirect('main:wall')
     if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
     if ('registered' in request.session):
-        if ('user_id' not in request.session):
-            context['registered'] = request.session['registered']
+        context['registered'] = request.session['registered']
         del(request.session['registered'])
     return render(request, 'main/index.html', context)
 
@@ -38,7 +39,7 @@ def register(request):
 
 def login(request):
     if ('user_id' in request.session):
-        return redirect('main:index')
+        return redirect('main:wall')
     if (request.method == 'GET'):
         return render(request, 'main/login.html')
     if (request.method == 'POST'):
@@ -46,7 +47,7 @@ def login(request):
             user = m.User.objects.get(email=request.POST['email'])
             request.session['user_id'] = user.id
             request.session['username'] = user.username
-            return redirect('main:index')
+            return redirect('main:wall')
         except m.User.DoesNotExist:
             pass
         except Exception as ex:
@@ -58,4 +59,13 @@ def logout(request):
     if ('user_id' in request.session and request.method == 'GET'):
         request.session.clear()
     return redirect('main:index')
+
+def search_results(request):
+    return render(request, 'main/search_results.html')
+
+def settings(request):
+    return render(request, 'main/settings.html')
+
+def wall(request):
+    return render(request, 'main/wall.html')
 

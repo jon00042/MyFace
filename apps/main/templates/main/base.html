@@ -10,8 +10,36 @@
     <title>MyFace</title>
 </head>
 <body>
-    {% include 'main/navbar.html' %}
-    {% block body %} {% endblock %}
+    <nav class="navbar navbar-expand navbar-light bg-light">
+        <div class="container mx-5">
+            <a class="navbar-brand" href="{% url 'main:index' %}">MyFace</a>
+            <ul class="navbar-nav ml-auto mr-5">
+                <li class="nav-item dropdown">
+                    {% if request.session.user_id %}
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{request.session.username}}</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="">Settings</a>
+                        <a class="dropdown-item" href="{% url 'main:logout' %}">Logout</a>
+                    </div>
+                    {% else %}
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="{% url 'main:login' %}">Login</a>
+                        <a class="dropdown-item" href="{% url 'main:register' %}">Register</a>
+                    </div>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+    </nav>
+    {% if request.session.user_id %}
+    <div class="main-frame">
+        <div class="sidebar mt-2">{% block sidebar %} {% endblock %}</div>
+        <div class="content mt-2 pl-3">{% block content %} {% endblock %}</div>
+    </div>
+    {% else %}
+        {% block pre-auth %} {% endblock %}
+    {% endif %}
     <script src="{% static 'main/lib/jquery-3.2.1.min.js' %}"></script>
     <script src="{% static 'main/lib/popper.min.js' %}"></script>
     <script src="{% static 'main/lib/bootstrap.min.js' %}"></script>
