@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 
 def index(request):
     if ('user_id' in request.session):
-        return redirect('main:wall')
+        return redirect('main:wall', wall_user_id=request.session['user_id'])
     if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
@@ -39,7 +39,7 @@ def register(request):
 
 def login(request):
     if ('user_id' in request.session):
-        return redirect('main:wall')
+        return redirect('main:wall', wall_user_id=request.session['user_id'])
     if (request.method == 'GET'):
         return render(request, 'main/login.html')
     if (request.method == 'POST'):
@@ -47,7 +47,7 @@ def login(request):
             user = m.User.objects.get(email=request.POST['email'])
             request.session['user_id'] = user.id
             request.session['username'] = user.username
-            return redirect('main:wall')
+            return redirect('main:wall', wall_user_id=request.session['user_id'])
         except m.User.DoesNotExist:
             pass
         except Exception as ex:
@@ -61,11 +61,27 @@ def logout(request):
     return redirect('main:index')
 
 def search_results(request):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
     return render(request, 'main/search_results.html')
 
 def settings(request):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
     return render(request, 'main/settings.html')
 
-def wall(request):
-    return render(request, 'main/wall.html')
+def wall(request, wall_user_id):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
+    context = {}
+    context['wall_user_id'] = wall_user_id
+    context['posts'] = m.Post.objects.filter(wall_user_id=wall_user_id).order_by('-id')
+    return render(request, 'main/wall.html', context)
 
+def post(request):
+    if ('user_id' not in request.session or request.method != 'POST'):
+        return redirect('main:index')
+    wall_user_id = request.POST['wall_user_id']
+    if (len(request.POST['text']) > 0):
+        m.Post.objects.create(text=request.POST['text'], post_user_id=request.session['user_id'], wall_user_id=wall_user_id)
+    return redirect('main:wall', wall_user_id=wall_user_id)

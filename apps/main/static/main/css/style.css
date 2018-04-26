@@ -30,3 +30,25 @@
     height: calc(100vh - 56px);
     overflow: scroll;
 }
+
+.postarea {
+    resize: none;
+}
+
+.posting {
+    width: 500px;
+    background-color: rgb(235, 233, 233);
+    font-family: Arial, Helvetica, sans-serif;
+    box-shadow:  4px 4px lightgrey;
+}
+
+.action {
+    font-size: .8em;
+    border-top: 1px solid darkgrey;
+    border-bottom: 1px solid darkgrey;
+}
+
+.action > a {
+    color: red;
+}
+

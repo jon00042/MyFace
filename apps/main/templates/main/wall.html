@@ -1,10 +1,52 @@
 {% extends 'main/base.html' %}
 
 {% block sidebar %}
-<h1>sidebar</h1>
+<div class="text-right">
+    <h2 class="mt-2 mb-5">{{request.session.username}}</h2>
+    <div><a href="">Following</a></div>
+    <div><a href="">Followers</a></div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+</div>
 {% endblock %}
 
 {% block content %}
-<h1>content</h1>
+<div class="pr-5">
+    <form action="{% url 'main:post' %}" method="POST">
+        {% csrf_token %}
+        <div><textarea class="postarea p-2" name="text" cols="60" rows="3" placeholder="Share something..."></textarea></div>
+        <input type="hidden" name="wall_user_id" value="{{wall_user_id}}">
+        <button class="btn btn-info mt-1">Share</button>
+    </form>
+    <hr>
+    {% for post in posts %}
+    <div class="posting pt-1 px-3 my-3">
+        {% if post.post_user.id == post.wall_user.id %}
+        <p>{{post.post_user.username}}</p>
+        {% else %}
+        <p>{{post.post_user.username}} > {{post.wall_user.username}}</p>
+        {% endif %}
+        <h3>{{post.text}}</h3>
+        <div class="action">
+            {% if post.post_user.id == request.session.user_id or post.wall_user_id == request.session.user_id %}
+            <a href="">delete</a>
+            {% else %}
+            <a href="">&nbsp;</a>
+            {% endif %}
+            <p class="float-right">{{post.created_at}}</p>
+        </div>
+        <form class="pt-2" action="">
+            <input type="text" size="49" placeholder="Add comment...">
+            <button class="ml-2 btn btn-sm btn-outline-primary">Save</button>
+        </form>
+        <p>&nbsp;</p>
+    </div>
+    {% endfor %}
+</div>
 {% endblock %}
 

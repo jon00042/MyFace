@@ -35,7 +35,7 @@
     {% if request.session.user_id %}
     <div class="main-frame">
         <div class="sidebar mt-2">{% block sidebar %} {% endblock %}</div>
-        <div class="content mt-2 pl-3">{% block content %} {% endblock %}</div>
+        <div class="content mt-3 pl-3">{% block content %} {% endblock %}</div>
     </div>
     {% else %}
         {% block pre-auth %} {% endblock %}
