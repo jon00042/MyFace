@@ -7,6 +7,13 @@ class User(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+class Followings(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    ################################
+    being_followed_user = models.ForeignKey(User, related_name='follows_me', on_delete=models.PROTECT)
+    doing_the_following_user = models.ForeignKey(User, related_name='i_follow', on_delete=models.PROTECT)
+
 class Post(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -14,3 +21,4 @@ class Post(models.Model):
     ################################
     post_user = models.ForeignKey(User, related_name='posted_by', on_delete=models.PROTECT)
     wall_user = models.ForeignKey(User, related_name='on_wall_of', on_delete=models.PROTECT)
+

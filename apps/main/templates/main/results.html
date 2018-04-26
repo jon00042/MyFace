@@ -1,0 +1,34 @@
+{% extends 'main/base.html' %}
+
+{% block sidebar %}
+<div class="text-right">
+        <h3 class="mt-2 mb-5">{{sidebar}}</h3>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div>
+        {% for user in users %}
+        <div class="search-result p-2">
+            <a href="{% url 'main:wall' wall_user_id=user.id %}">{{user.username}}</a>
+            {% if user.id != request.session.user_id %}
+            {% if user.id|slugify in followings %}
+            <a class="btn btn-sm btn-warning float-right" href="{% url 'main:unfollow' unfollow_user_id=user.id %}">Unfollow</a>
+            {% else %}
+            <a class="btn btn-sm btn-success float-right" href="{% url 'main:follow' follow_user_id=user.id %}">Follow</a>
+            {% endif %}
+            {% endif %}
+            <hr>
+            Joined {{user.created_at}}
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+

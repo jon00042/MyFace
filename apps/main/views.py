@@ -60,17 +60,92 @@ def logout(request):
         request.session.clear()
     return redirect('main:index')
 
+def get_followings(session_user_id):
+    followings = {}
+    results = m.Followings.objects.filter(doing_the_following_user_id=session_user_id)
+    for result in results:
+        followings[str(result.being_followed_user_id)] = 1
+    return followings
+
 def search(request):
     if ('user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     context = {}
-    context['results'] = m.User.objects.filter(username__icontains=request.GET['text']).order_by('username')
-    return render(request, 'main/search.html', context)
+    context['sidebar'] = 'Search Results'
+    context['users'] = m.User.objects.filter(username__icontains=request.GET['text']).order_by('username')
+    context['followings'] = get_followings(request.session['user_id'])
+    request.session['last_url'] = request.get_full_path()
+    return render(request, 'main/results.html', context)
 
-def settings(request):
+def followers_of(request, follow_user_id):
     if ('user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
-    return render(request, 'main/settings.html')
+    followed_user = m.User.objects.get(id=follow_user_id)
+    following_users = []
+    results = followed_user.follows_me.all()
+    for result in results:
+        following_users.append(result.doing_the_following_user)
+    context = {}
+    context['sidebar'] = 'Followers of {}'.format(followed_user.username)
+    context['users'] = following_users
+    context['followings'] = get_followings(request.session['user_id'])
+    request.session['last_url'] = request.get_full_path()
+    return render(request, 'main/results.html', context)
+
+def followings_of(request, follow_user_id):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
+    user_doing_the_following = m.User.objects.get(id=follow_user_id)
+    user_followings = []
+    results = user_doing_the_following.i_follow.all()
+    for result in results:
+        user_followings.append(result.being_followed_user)
+    context = {}
+    context['sidebar'] = '{} follows'.format(user_doing_the_following.username)
+    context['users'] = user_followings
+    context['followings'] = get_followings(request.session['user_id'])
+    request.session['last_url'] = request.get_full_path()
+    return render(request, 'main/results.html', context)
+
+def follow(request, follow_user_id):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
+    if ('last_url' not in request.session):
+        return redirect('main:index')
+    if (follow_user_id == request.session['user_id']):
+        return redirect('main:index')
+    last_url = request.session['last_url']
+    del(request.session['last_url'])
+    existing = None
+    try:
+        existing = m.Followings.objects.get(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['user_id'])
+    except m.Followings.DoesNotExist:
+        pass
+    except Exception as ex:
+        print(ex)
+        return redirect('main:index')
+    if (not existing):
+        m.Followings.objects.create(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['user_id'])
+    return redirect(last_url)
+
+def unfollow(request, unfollow_user_id):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
+    if ('last_url' not in request.session):
+        return redirect('main:index')
+    last_url = request.session['last_url']
+    del(request.session['last_url'])
+    existing = None
+    try:
+        existing = m.Followings.objects.get(being_followed_user_id=unfollow_user_id, doing_the_following_user_id=request.session['user_id'])
+    except m.Followings.DoesNotExist:
+        pass
+    except Exception as ex:
+        print(ex)
+        return redirect('main:index')
+    if (existing):
+        existing.delete()
+    return redirect(last_url)
 
 def wall(request, wall_user_id):
     if ('user_id' not in request.session or request.method != 'GET'):
@@ -89,3 +164,9 @@ def post(request):
     if (len(request.POST['text']) > 0):
         m.Post.objects.create(text=request.POST['text'], post_user_id=request.session['user_id'], wall_user_id=wall_user_id)
     return redirect('main:wall', wall_user_id=wall_user_id)
+
+def settings(request):
+    if ('user_id' not in request.session or request.method != 'GET'):
+        return redirect('main:index')
+    return render(request, 'main/settings.html')
+
