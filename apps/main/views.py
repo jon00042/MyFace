@@ -60,10 +60,12 @@ def logout(request):
         request.session.clear()
     return redirect('main:index')
 
-def search_results(request):
+def search(request):
     if ('user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
-    return render(request, 'main/search_results.html')
+    context = {}
+    context['results'] = m.User.objects.filter(username__icontains=request.GET['text']).order_by('username')
+    return render(request, 'main/search.html', context)
 
 def settings(request):
     if ('user_id' not in request.session or request.method != 'GET'):
@@ -74,7 +76,9 @@ def wall(request, wall_user_id):
     if ('user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     context = {}
+    wall_user = m.User.objects.get(id=wall_user_id)
     context['wall_user_id'] = wall_user_id
+    context['wall_username'] = wall_user.username
     context['posts'] = m.Post.objects.filter(wall_user_id=wall_user_id).order_by('-id')
     return render(request, 'main/wall.html', context)
 

@@ -13,6 +13,9 @@
     <nav class="navbar navbar-expand navbar-light bg-light">
         <div class="container mx-5">
             <a class="navbar-brand" href="{% url 'main:index' %}">MyFace</a>
+            <form class="form-inline my-2 my-lg-0" action="{% url 'main:search' %}" method="GET">
+                <input class="form-control mr-sm-2" type="search" name="text" placeholder="Search..." aria-label="Search">
+            </form>
             <ul class="navbar-nav ml-auto mr-5">
                 <li class="nav-item dropdown">
                     {% if request.session.user_id %}
@@ -34,8 +37,8 @@
     </nav>
     {% if request.session.user_id %}
     <div class="main-frame">
-        <div class="sidebar mt-2">{% block sidebar %} {% endblock %}</div>
-        <div class="content mt-3 pl-3">{% block content %} {% endblock %}</div>
+        <div class="sidebar pt-2">{% block sidebar %} {% endblock %}</div>
+        <div class="content pt-3 pl-3">{% block content %} {% endblock %}</div>
     </div>
     {% else %}
         {% block pre-auth %} {% endblock %}

@@ -9,7 +9,7 @@ urlpatterns = [
     path('login', views.login, name='login'),
     path('logout', views.logout, name='logout'),
     path('post', views.post, name='post'),
-    path('search_results', views.search_results, name='search_results'),
+    path('search', views.search, name='search'),
     path('settings', views.settings, name='settings'),
     path('wall/<int:wall_user_id>', views.wall, name='wall'),
 ]
