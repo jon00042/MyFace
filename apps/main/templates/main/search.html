@@ -1,0 +1,28 @@
+{% extends 'main/base.html' %}
+
+{% block sidebar %}
+<div class="text-right">
+        <h3 class="mt-2 mb-5">Search Results</h3>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div>
+        {% for user in results %}
+        <div class="search-result p-2">
+            <a href="{% url 'main:wall' wall_user_id=user.id %}">{{user.username}}</a>
+            <button class="btn btn-sm btn-success float-right">Follow</button>
+            <hr>
+            Joined {{user.created_at}}
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
