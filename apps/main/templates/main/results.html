@@ -2,7 +2,7 @@
 
 {% block sidebar %}
 <div class="text-right">
-        <h3 class="mt-2 mb-5">{{sidebar}}</h3>
+        <h3 class="mt-2 mb-5">{{sidebar_text}}</h3>
         <br>
         <br>
         <br>
@@ -15,11 +15,11 @@
 
 {% block content %}
     <div>
-        {% for user in users %}
+        {% for user in users_list %}
         <div class="search-result p-2">
             <a href="{% url 'main:wall' wall_user_id=user.id %}">{{user.username}}</a>
-            {% if user.id != request.session.user_id %}
-            {% if user.id|slugify in followings %}
+            {% if user.id != request.session.logged_in_user_id %}
+            {% if user.id|slugify in logged_in_followings_dict %}
             <a class="btn btn-sm btn-warning float-right" href="{% url 'main:unfollow' unfollow_user_id=user.id %}">Unfollow</a>
             {% else %}
             <a class="btn btn-sm btn-success float-right" href="{% url 'main:follow' follow_user_id=user.id %}">Follow</a>

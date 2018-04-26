@@ -18,8 +18,8 @@
             </form>
             <ul class="navbar-nav ml-auto mr-5">
                 <li class="nav-item dropdown">
-                    {% if request.session.user_id %}
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{request.session.username}}</a>
+                    {% if request.session.logged_in_user_id %}
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{request.session.logged_in_username}}</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <a class="dropdown-item" href="">Settings</a>
                         <a class="dropdown-item" href="{% url 'main:logout' %}">Logout</a>
@@ -35,7 +35,7 @@
             </ul>
         </div>
     </nav>
-    {% if request.session.user_id %}
+    {% if request.session.logged_in_user_id %}
     <div class="main-frame">
         <div class="sidebar pt-2">{% block sidebar %} {% endblock %}</div>
         <div class="content pt-3 pl-3">{% block content %} {% endblock %}</div>

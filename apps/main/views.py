@@ -2,134 +2,131 @@ import apps.main.models as m
 import django
 
 from django.contrib import messages
+from django.db.models.functions import Lower
 from django.shortcuts import redirect, render
 
 def index(request):
-    if ('user_id' in request.session):
-        return redirect('main:wall', wall_user_id=request.session['user_id'])
+    if ('logged_in_user_id' in request.session):
+        return redirect('main:wall', wall_user_id=request.session['logged_in_user_id'])
     if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
-    if ('registered' in request.session):
-        context['registered'] = request.session['registered']
-        del(request.session['registered'])
+    if ('just_registered_email' in request.session):
+        context['just_registered_email'] = request.session['just_registered_email']
+        del(request.session['just_registered_email'])
     return render(request, 'main/index.html', context)
 
 def register(request):
-    if ('user_id' not in request.session):
-        if (request.method == 'GET'):
-            return render(request, 'main/register.html')
-        if (request.method == 'POST'):
-            for field in ('email', 'username', 'password'):
-                if (len(request.POST[field]) < 1):
-                    messages.error(request, 'registration fields cannot be empty!')
-                    return redirect('main:register')
-            if (request.POST['password'] != request.POST['confirm']):
-                messages.error(request, 'passwords mismatch!')
-                return redirect('main:register')
-        try:
-            m.User.objects.create(email=request.POST['email'], username=request.POST['username'], password=request.POST['password'])
-            request.session['registered'] = request.POST['email']
-            return redirect('main:index')
-        except django.db.utils.IntegrityError:
-            messages.error(request, 'email already in use!')
-        except Exception as ex:
-            messages.error(request, ex)
+    if ('logged_in_user_id' in request.session):
+        return redirect('main:index')
+    if (request.method == 'GET'):
+        return render(request, 'main/register.html')
+    if (request.method != 'POST'):
+        return redirect('main:index')
+    for field in ('email', 'username', 'password'):
+        if (len(request.POST[field]) < 1):
+            messages.error(request, 'registration fields cannot be empty!')
+            return redirect('main:register')
+    if (request.POST['password'] != request.POST['confirm']):
+        messages.error(request, 'passwords mismatch!')
+        return redirect('main:register')
+    try:
+        m.User.objects.create(email=request.POST['email'], username=request.POST['username'], password=request.POST['password'])
+        request.session['just_registered_email'] = request.POST['email']
+        return redirect('main:index')
+    except django.db.utils.IntegrityError:
+        messages.error(request, 'email already in use!')
+    except Exception as ex:
+        messages.error(request, ex)
     return redirect('main:register')
 
 def login(request):
-    if ('user_id' in request.session):
-        return redirect('main:wall', wall_user_id=request.session['user_id'])
+    if ('logged_in_user_id' in request.session):
+        return redirect('main:index')
     if (request.method == 'GET'):
         return render(request, 'main/login.html')
-    if (request.method == 'POST'):
-        try:
-            user = m.User.objects.get(email=request.POST['email'])
-            request.session['user_id'] = user.id
-            request.session['username'] = user.username
-            return redirect('main:wall', wall_user_id=request.session['user_id'])
-        except m.User.DoesNotExist:
-            pass
-        except Exception as ex:
-            messages.error(request, ex)
-        messages.error(request, 'login attempt failed!')
+    if (request.method != 'POST'):
+        return redirect('main:index')
+    try:
+        user = m.User.objects.get(email=request.POST['email'])
+        request.session['logged_in_user_id'] = user.id
+        request.session['logged_in_username'] = user.username
+        return redirect('main:wall', wall_user_id=user.id)
+    except m.User.DoesNotExist:
+        pass
+    except Exception as ex:
+        messages.error(request, ex)
+    messages.error(request, 'login attempt failed!')
     return redirect('main:login')
 
 def logout(request):
-    if ('user_id' in request.session and request.method == 'GET'):
-        request.session.clear()
+    request.session.clear()
     return redirect('main:index')
 
-def get_followings(session_user_id):
-    followings = {}
-    results = m.Followings.objects.filter(doing_the_following_user_id=session_user_id)
+def get_followings_dict(of_user_id):
+    followings_dict = {}
+    results = m.Followings.objects.filter(doing_the_following_user_id=of_user_id)
     for result in results:
-        followings[str(result.being_followed_user_id)] = 1
-    return followings
+        followings_dict[str(result.being_followed_user_id)] = 1
+    return followings_dict
 
 def search(request):
-    if ('user_id' not in request.session or request.method != 'GET'):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     context = {}
-    context['sidebar'] = 'Search Results'
-    context['users'] = m.User.objects.filter(username__icontains=request.GET['text']).order_by('username')
-    context['followings'] = get_followings(request.session['user_id'])
+    context['sidebar_text'] = 'Search Results'
+    context['users_list'] = m.User.objects.filter(username__icontains=request.GET['text']).order_by(Lower('username'))
+    context['logged_in_followings_dict'] = get_followings_dict(request.session['logged_in_user_id'])
     request.session['last_url'] = request.get_full_path()
     return render(request, 'main/results.html', context)
 
-def followers_of(request, follow_user_id):
-    if ('user_id' not in request.session or request.method != 'GET'):
+def followers_of(request, followed_user_id):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
-    followed_user = m.User.objects.get(id=follow_user_id)
-    following_users = []
-    results = followed_user.follows_me.all()
-    for result in results:
-        following_users.append(result.doing_the_following_user)
+    followed_user = m.User.objects.get(id=followed_user_id)
+    doing_the_following_user_ids = followed_user.follows_me.all().values_list('doing_the_following_user_id', flat=True)
     context = {}
-    context['sidebar'] = 'Followers of {}'.format(followed_user.username)
-    context['users'] = following_users
-    context['followings'] = get_followings(request.session['user_id'])
+    context['sidebar_text'] = 'Followers of {}'.format(followed_user.username)
+    context['users_list'] = m.User.objects.filter(id__in=doing_the_following_user_ids).order_by(Lower('username'))
+    context['logged_in_followings_dict'] = get_followings_dict(request.session['logged_in_user_id'])
     request.session['last_url'] = request.get_full_path()
     return render(request, 'main/results.html', context)
 
-def followings_of(request, follow_user_id):
-    if ('user_id' not in request.session or request.method != 'GET'):
+def followings_of(request, following_user_id):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
-    user_doing_the_following = m.User.objects.get(id=follow_user_id)
-    user_followings = []
-    results = user_doing_the_following.i_follow.all()
-    for result in results:
-        user_followings.append(result.being_followed_user)
+    user_doing_the_following = m.User.objects.get(id=following_user_id)
+    being_followed_user_ids = user_doing_the_following.i_follow.all().values_list('being_followed_user_id', flat=True)
     context = {}
-    context['sidebar'] = '{} follows'.format(user_doing_the_following.username)
-    context['users'] = user_followings
-    context['followings'] = get_followings(request.session['user_id'])
+    context['sidebar_text'] = '{} follows'.format(user_doing_the_following.username)
+    context['users_list'] = m.User.objects.filter(id__in=being_followed_user_ids).order_by(Lower('username'))
+    context['logged_in_followings_dict'] = get_followings_dict(request.session['logged_in_user_id'])
     request.session['last_url'] = request.get_full_path()
     return render(request, 'main/results.html', context)
 
 def follow(request, follow_user_id):
-    if ('user_id' not in request.session or request.method != 'GET'):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     if ('last_url' not in request.session):
         return redirect('main:index')
-    if (follow_user_id == request.session['user_id']):
+    if (follow_user_id == request.session['logged_in_user_id']):
         return redirect('main:index')
     last_url = request.session['last_url']
     del(request.session['last_url'])
     existing = None
     try:
-        existing = m.Followings.objects.get(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['user_id'])
+        existing = m.Followings.objects.get(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['logged_in_user_id'])
     except m.Followings.DoesNotExist:
         pass
     except Exception as ex:
         print(ex)
         return redirect('main:index')
     if (not existing):
-        m.Followings.objects.create(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['user_id'])
+        m.Followings.objects.create(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['logged_in_user_id'])
     return redirect(last_url)
 
 def unfollow(request, unfollow_user_id):
-    if ('user_id' not in request.session or request.method != 'GET'):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     if ('last_url' not in request.session):
         return redirect('main:index')
@@ -137,7 +134,7 @@ def unfollow(request, unfollow_user_id):
     del(request.session['last_url'])
     existing = None
     try:
-        existing = m.Followings.objects.get(being_followed_user_id=unfollow_user_id, doing_the_following_user_id=request.session['user_id'])
+        existing = m.Followings.objects.get(being_followed_user_id=unfollow_user_id, doing_the_following_user_id=request.session['logged_in_user_id'])
     except m.Followings.DoesNotExist:
         pass
     except Exception as ex:
@@ -148,7 +145,7 @@ def unfollow(request, unfollow_user_id):
     return redirect(last_url)
 
 def wall(request, wall_user_id):
-    if ('user_id' not in request.session or request.method != 'GET'):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     context = {}
     wall_user = m.User.objects.get(id=wall_user_id)
@@ -158,15 +155,15 @@ def wall(request, wall_user_id):
     return render(request, 'main/wall.html', context)
 
 def post(request):
-    if ('user_id' not in request.session or request.method != 'POST'):
+    if ('logged_in_user_id' not in request.session or request.method != 'POST'):
         return redirect('main:index')
     wall_user_id = request.POST['wall_user_id']
     if (len(request.POST['text']) > 0):
-        m.Post.objects.create(text=request.POST['text'], post_user_id=request.session['user_id'], wall_user_id=wall_user_id)
+        m.Post.objects.create(text=request.POST['text'], post_user_id=request.session['logged_in_user_id'], wall_user_id=wall_user_id)
     return redirect('main:wall', wall_user_id=wall_user_id)
 
 def settings(request):
-    if ('user_id' not in request.session or request.method != 'GET'):
+    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
         return redirect('main:index')
     return render(request, 'main/settings.html')
 

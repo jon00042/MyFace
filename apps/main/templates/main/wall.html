@@ -3,8 +3,8 @@
 {% block sidebar %}
 <div class="text-right">
     <h2 class="mt-2 mb-5">{{wall_username}}</h2>
-    <div><a href="{% url 'main:followings_of' follow_user_id=wall_user_id %}">Following</a></div>
-    <div><a href="{% url 'main:followers_of' follow_user_id=wall_user_id %}">Followers</a></div>
+    <div><a href="{% url 'main:followings_of' following_user_id=wall_user_id %}">Following</a></div>
+    <div><a href="{% url 'main:followers_of' followed_user_id=wall_user_id %}">Followers</a></div>
     <br>
     <br>
     <br>
@@ -33,7 +33,7 @@
         {% endif %}
         <h3>{{post.text}}</h3>
         <div class="action">
-            {% if post.post_user.id == request.session.user_id or post.wall_user_id == request.session.user_id %}
+            {% if post.post_user.id == request.session.logged_in_user_id or post.wall_user_id == request.session.logged_in_user_id %}
             <a href="">delete</a>
             {% else %}
             <a href="">&nbsp;</a>
