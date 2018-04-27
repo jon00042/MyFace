@@ -12,6 +12,8 @@ urlpatterns = [
 
     path('add_post', views.add_post, name='add_post'),
     path('del_post/<int:post_id>', views.del_post, name='del_post'),
+    path('add_comment/<int:post_id>', views.add_comment, name='add_comment'),
+    path('del_comment/<int:comment_id>', views.del_comment, name='del_comment'),
     path('wall/<int:wall_user_id>', views.wall, name='wall'),
 
     path('follow/<int:follow_user_id>', views.follow, name='follow'),

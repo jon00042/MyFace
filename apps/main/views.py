@@ -5,9 +5,19 @@ from django.contrib import messages
 from django.db.models.functions import Lower
 from django.shortcuts import redirect, render
 
+def get_logged_in_user(request):
+    if ('logged_in_user_id' not in request.session):
+        return None
+    try:
+        return m.User.objects.get(id=request.session['logged_in_user_id'])
+    except Exception as ex:
+        print(ex)
+    return None
+
 def index(request):
-    if ('logged_in_user_id' in request.session):
-        return redirect('main:wall', wall_user_id=request.session['logged_in_user_id'])
+    logged_in_user = get_logged_in_user(request)
+    if (logged_in_user):
+        return redirect('main:wall', wall_user_id=logged_in_user.id)
     if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
@@ -17,7 +27,8 @@ def index(request):
     return render(request, 'main/index.html', context)
 
 def register(request):
-    if ('logged_in_user_id' in request.session):
+    logged_in_user = get_logged_in_user(request)
+    if (logged_in_user):
         return redirect('main:index')
     if (request.method == 'GET'):
         return render(request, 'main/register.html')
@@ -42,7 +53,8 @@ def register(request):
     return redirect('main:register')
 
 def login(request):
-    if ('logged_in_user_id' in request.session):
+    logged_in_user = get_logged_in_user(request)
+    if (logged_in_user):
         return redirect('main:index')
     if (request.method == 'GET'):
         return render(request, 'main/login.html')
@@ -69,7 +81,7 @@ def get_followings_dict(of_user_id):
     followings_dict = {}
     results = None
     try:
-        results = m.Followings.objects.filter(doing_the_following_user_id=of_user_id)
+        results = m.Following.objects.filter(doing_the_following_user_id=of_user_id)
     except:
         raise
     for result in results:
@@ -77,13 +89,16 @@ def get_followings_dict(of_user_id):
     return followings_dict
 
 def search(request):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
     context['sidebar_text'] = 'Search Results'
     try:
         context['users_list'] = m.User.objects.filter(username__icontains=request.GET['text']).order_by(Lower('username'))
-        context['logged_in_followings_dict'] = get_followings_dict(request.session['logged_in_user_id'])
+        context['logged_in_followings_dict'] = get_followings_dict(logged_in_user.id)
     except Exception as ex:
         print(ex)
         return redirect('main:index')
@@ -91,7 +106,10 @@ def search(request):
     return render(request, 'main/results.html', context)
 
 def followers_of(request, followed_user_id):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
     try:
@@ -99,7 +117,7 @@ def followers_of(request, followed_user_id):
         context['sidebar_text'] = 'Followers of {}'.format(followed_user.username)
         doing_the_following_user_ids = followed_user.follows_me.all().values_list('doing_the_following_user_id', flat=True)
         context['users_list'] = m.User.objects.filter(id__in=doing_the_following_user_ids).order_by(Lower('username'))
-        context['logged_in_followings_dict'] = get_followings_dict(request.session['logged_in_user_id'])
+        context['logged_in_followings_dict'] = get_followings_dict(logged_in_user.id)
     except Exception as ex:
         print(ex)
         return redirect('main:index')
@@ -107,7 +125,10 @@ def followers_of(request, followed_user_id):
     return render(request, 'main/results.html', context)
 
 def followings_of(request, following_user_id):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     try:
         user_doing_the_following = m.User.objects.get(id=following_user_id)
@@ -115,7 +136,7 @@ def followings_of(request, following_user_id):
         context = {}
         context['sidebar_text'] = '{} follows'.format(user_doing_the_following.username)
         context['users_list'] = m.User.objects.filter(id__in=being_followed_user_ids).order_by(Lower('username'))
-        context['logged_in_followings_dict'] = get_followings_dict(request.session['logged_in_user_id'])
+        context['logged_in_followings_dict'] = get_followings_dict(logged_in_user.id)
     except Exception as ex:
         print(ex)
         return redirect('main:index')
@@ -123,32 +144,38 @@ def followings_of(request, following_user_id):
     return render(request, 'main/results.html', context)
 
 def follow(request, follow_user_id):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     if ('last_url' not in request.session):
         return redirect('main:index')
-    if (follow_user_id == request.session['logged_in_user_id']):
+    if (follow_user_id == logged_in_user.id):
         return redirect('main:index')
     last_url = request.session['last_url']
     del(request.session['last_url'])
     existing = None
     try:
-        existing = m.Followings.objects.get(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['logged_in_user_id'])
-    except m.Followings.DoesNotExist:
+        existing = m.Following.objects.get(being_followed_user_id=follow_user_id, doing_the_following_user_id=logged_in_user.id)
+    except m.Following.DoesNotExist:
         pass
     except Exception as ex:
         print(ex)
         return redirect('main:index')
     if (not existing):
         try:
-            m.Followings.objects.create(being_followed_user_id=follow_user_id, doing_the_following_user_id=request.session['logged_in_user_id'])
+            m.Following.objects.create(being_followed_user_id=follow_user_id, doing_the_following_user_id=logged_in_user.id)
         except Exception as ex:
             print(ex)
             return redirect('main:index')
     return redirect(last_url)
 
 def unfollow(request, unfollow_user_id):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     if ('last_url' not in request.session):
         return redirect('main:index')
@@ -156,8 +183,8 @@ def unfollow(request, unfollow_user_id):
     del(request.session['last_url'])
     existing = None
     try:
-        existing = m.Followings.objects.get(being_followed_user_id=unfollow_user_id, doing_the_following_user_id=request.session['logged_in_user_id'])
-    except m.Followings.DoesNotExist:
+        existing = m.Following.objects.get(being_followed_user_id=unfollow_user_id, doing_the_following_user_id=logged_in_user.id)
+    except m.Following.DoesNotExist:
         pass
     except Exception as ex:
         print(ex)
@@ -171,7 +198,10 @@ def unfollow(request, unfollow_user_id):
     return redirect(last_url)
 
 def wall(request, wall_user_id):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     context = {}
     try:
@@ -185,23 +215,29 @@ def wall(request, wall_user_id):
     return render(request, 'main/wall.html', context)
 
 def add_post(request):
-    if ('logged_in_user_id' not in request.session or request.method != 'POST'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'POST'):
         return redirect('main:index')
     wall_user_id = request.POST['wall_user_id']
     if (len(request.POST['text']) > 0):
         try:
-            m.Post.objects.create(text=request.POST['text'], post_user_id=request.session['logged_in_user_id'], wall_user_id=wall_user_id)
+            m.Post.objects.create(text=request.POST['text'], post_user_id=logged_in_user.id, wall_user_id=wall_user_id)
         except Exception as ex:
             print(ex)
             return redirect('main:index')
     return redirect('main:wall', wall_user_id=wall_user_id)
 
 def del_post(request, post_id):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     try:
         post = m.Post.objects.get(id=post_id)
-        if (post.wall_user_id == request.session['logged_in_user_id'] or post.post_user_id == request.session['logged_in_user_id']):
+        if (post.wall_user_id == logged_in_user.id or post.post_user_id == logged_in_user.id):
             post.delete()
         return redirect('main:wall', wall_user_id=post.wall_user_id)
     except m.Post.DoesNotExist:
@@ -210,8 +246,27 @@ def del_post(request, post_id):
         print(ex)
         return redirect('main:index')
 
+def add_comment(request, post_id):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
+        return redirect('main:index')
+    return None
+
+def del_comment(request, comment_id):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
+        return redirect('main:index')
+    return None
+
 def settings(request):
-    if ('logged_in_user_id' not in request.session or request.method != 'GET'):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method != 'GET'):
         return redirect('main:index')
     return render(request, 'main/settings.html')
 

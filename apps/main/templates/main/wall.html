@@ -29,7 +29,7 @@
         {% if post.post_user.id == post.wall_user.id %}
         <p>{{post.post_user.username}}</p>
         {% else %}
-        <p>{{post.post_user.username}} > {{post.wall_user.username}}</p>
+        <p><a href="{% url 'main:wall' wall_user_id=post.post_user.id %}">{{post.post_user.username}}</a> > {{post.wall_user.username}}</p>
         {% endif %}
         <h3>{{post.text}}</h3>
         <div class="action">

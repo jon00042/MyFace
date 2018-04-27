@@ -14,7 +14,7 @@ class User(models.Model):
         tz = pytz.timezone('Asia/Hong_Kong')  ## TODO: use tz from browser!
         return self.created_at.astimezone(tz).strftime(r'%Y-%m-%d %H:%M:%S')
 
-class Followings(models.Model):
+class Following(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     ################################
@@ -28,6 +28,18 @@ class Post(models.Model):
     ################################
     post_user = models.ForeignKey(User, related_name='posted_by', on_delete=models.PROTECT)
     wall_user = models.ForeignKey(User, related_name='on_wall_of', on_delete=models.PROTECT)
+    ################################
+    @property
+    def local_created_at(self):
+        tz = pytz.timezone('Asia/Hong_Kong')  ## TODO: use tz from browser!
+        return self.created_at.astimezone(tz).strftime(r'%Y-%m-%d %H:%M:%S')
+
+class Comment(models.Model):
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    ################################
+    post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     ################################
     @property
     def local_created_at(self):
