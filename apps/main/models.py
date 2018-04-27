@@ -1,3 +1,5 @@
+import pytz
+
 from django.db import models
 
 class User(models.Model):
@@ -6,6 +8,11 @@ class User(models.Model):
     password = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    ################################
+    @property
+    def local_created_at(self):
+        tz = pytz.timezone('Asia/Hong_Kong')  ## TODO: use tz from browser!
+        return self.created_at.astimezone(tz).strftime(r'%Y-%m-%d %H:%M:%S')
 
 class Followings(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -21,4 +28,9 @@ class Post(models.Model):
     ################################
     post_user = models.ForeignKey(User, related_name='posted_by', on_delete=models.PROTECT)
     wall_user = models.ForeignKey(User, related_name='on_wall_of', on_delete=models.PROTECT)
+    ################################
+    @property
+    def local_created_at(self):
+        tz = pytz.timezone('Asia/Hong_Kong')  ## TODO: use tz from browser!
+        return self.created_at.astimezone(tz).strftime(r'%Y-%m-%d %H:%M:%S')
 
