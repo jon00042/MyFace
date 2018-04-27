@@ -12,6 +12,7 @@ def get_logged_in_user(request):
         return m.User.objects.get(id=request.session['logged_in_user_id'])
     except Exception as ex:
         print(ex)
+    request.session.clear()
     return None
 
 def index(request):
@@ -34,7 +35,9 @@ def register(request):
         return render(request, 'main/register.html')
     if (request.method != 'POST'):
         return redirect('main:index')
-    for field in ('email', 'username', 'password'):
+    for field in ('email', 'username', 'password', 'confirm'):
+        if (field not in request.POST):
+            return redirect('main:index')
         if (len(request.POST[field]) < 1):
             messages.error(request, 'registration fields cannot be empty!')
             return redirect('main:register')
@@ -59,6 +62,8 @@ def login(request):
     if (request.method == 'GET'):
         return render(request, 'main/login.html')
     if (request.method != 'POST'):
+        return redirect('main:index')
+    if ('email' not in request.POST):
         return redirect('main:index')
     try:
         user = m.User.objects.get(email=request.POST['email'])
@@ -220,14 +225,15 @@ def add_post(request):
         return redirect('main:index')
     if (request.method != 'POST'):
         return redirect('main:index')
-    wall_user_id = request.POST['wall_user_id']
+    if ('text' not in request.POST or 'wall_user_id' not in request.POST):
+        return redirect('main:index')
     if (len(request.POST['text']) > 0):
         try:
-            m.Post.objects.create(text=request.POST['text'], post_user_id=logged_in_user.id, wall_user_id=wall_user_id)
+            m.Post.objects.create(text=request.POST['text'], post_user_id=logged_in_user.id, wall_user_id=request.POST['wall_user_id'])
         except Exception as ex:
             print(ex)
             return redirect('main:index')
-    return redirect('main:wall', wall_user_id=wall_user_id)
+    return redirect('main:wall', wall_user_id=request.POST['wall_user_id'])
 
 def del_post(request, post_id):
     logged_in_user = get_logged_in_user(request)
@@ -246,19 +252,46 @@ def del_post(request, post_id):
         print(ex)
         return redirect('main:index')
 
-def add_comment(request, post_id):
+def add_comment(request):
     logged_in_user = get_logged_in_user(request)
     if (not logged_in_user):
         return redirect('main:index')
-    if (request.method != 'GET'):
+    if (request.method != 'POST'):
         return redirect('main:index')
-    return None
+    if ('post_id' not in request.POST or 'text' not in request.POST):
+        return redirect('main:index')
+    post = None
+    try:
+        post = m.Post.objects.get(id=request.POST['post_id'])
+    except m.Post.DoesNotExist:
+        return redirect('main:index')
+    except Exception as ex:
+        print(ex)
+        return redirect('main:index')
+    try:
+        m.Comment.objects.create(post_id=post.id, text=request.POST['text'], user_id=logged_in_user.id)
+        return redirect('main:wall', wall_user_id=post.wall_user_id)
+    except Exception as ex:
+        print(ex)
+        return redirect('main:index')
 
 def del_comment(request, comment_id):
     logged_in_user = get_logged_in_user(request)
     if (not logged_in_user):
         return redirect('main:index')
     if (request.method != 'GET'):
+        return redirect('main:index')
+    comment = None
+    try:
+        comment = m.Comment.objects.get(id=comment_id)
+        post = comment.post
+        if (comment.user_id == logged_in_user.id or post.wall_user_id == logged_in_user.id):
+            comment.delete()
+        return redirect('main:wall', wall_user_id=post.wall_user_id)
+    except m.Comment.DoesNotExist:
+        return redirect('main:index')
+    except Exception as ex:
+        print(ex)
         return redirect('main:index')
     return None
 

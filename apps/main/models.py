@@ -40,6 +40,7 @@ class Comment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     ################################
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='comments', on_delete=models.PROTECT)
     ################################
     @property
     def local_created_at(self):

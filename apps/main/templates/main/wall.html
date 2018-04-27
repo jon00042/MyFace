@@ -33,17 +33,36 @@
         {% endif %}
         <h3>{{post.text}}</h3>
         <div class="action">
-            {% if post.post_user.id == request.session.logged_in_user_id or post.wall_user_id == request.session.logged_in_user_id %}
+            {% if post.post_user_id == request.session.logged_in_user_id or post.wall_user_id == request.session.logged_in_user_id %}
             <a href="{% url 'main:del_post' post_id=post.id %}">delete</a>
             {% else %}
             <a href="">&nbsp;</a>
             {% endif %}
             <p class="float-right">{{post.local_created_at}}</p>
         </div>
-        <form class="pt-2" action="">
-            <input type="text" size="49" placeholder="Add comment...">
+        <form class="py-2" action="{% url 'main:add_comment' %}" method="POST">
+            {% csrf_token %}
+            <input type="text" size="49" name="text" placeholder="Add comment...">
+            <input type="hidden" name="post_id" value="{{post.id}}">
             <button class="ml-2 btn btn-sm btn-outline-primary">Save</button>
         </form>
+        {% for comment in post.comments.all %}
+        <div class="comment pl-3 pt-3">
+            {{comment.text}}
+            <div class="action">
+                {% if comment.user_id == request.session.logged_in_user_id or post.wall_user_id == request.session.logged_in_user_id %}
+                <a href="{% url 'main:del_comment' comment_id=comment.id %}">delete</a>
+                {% else %}
+                <a href="">&nbsp;</a>
+                {% endif %}
+                {% if comment.user_id == post.wall_user_id %}
+                <p class="float-right">{{comment.user.username}} @ {{comment.local_created_at}}</p>
+                {% else %}
+                <p class="float-right"><a href="{% url 'main:wall' wall_user_id=comment.user_id %}">{{comment.user.username}}</a> @ {{comment.local_created_at}}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
         <p>&nbsp;</p>
     </div>
     {% endfor %}
