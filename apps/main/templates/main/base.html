@@ -37,7 +37,7 @@
     </nav>
     {% if request.session.logged_in_user_id %}
     <div class="main-frame">
-        <div class="sidebar pt-2">{% block sidebar %} {% endblock %}</div>
+        <div class="sidebar pt-2 pl-2">{% block sidebar %} {% endblock %}</div>
         <div class="content pt-3 pl-3">{% block content %} {% endblock %}</div>
     </div>
     {% else %}

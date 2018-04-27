@@ -17,7 +17,7 @@
 
 {% block content %}
 <div class="pr-5">
-    <form action="{% url 'main:post' %}" method="POST">
+    <form action="{% url 'main:add_post' %}" method="POST">
         {% csrf_token %}
         <div><textarea class="postarea p-2" name="text" cols="60" rows="3" placeholder="Share something..."></textarea></div>
         <input type="hidden" name="wall_user_id" value="{{wall_user_id}}">
@@ -34,7 +34,7 @@
         <h3>{{post.text}}</h3>
         <div class="action">
             {% if post.post_user.id == request.session.logged_in_user_id or post.wall_user_id == request.session.logged_in_user_id %}
-            <a href="">delete</a>
+            <a href="{% url 'main:del_post' post_id=post.id %}">delete</a>
             {% else %}
             <a href="">&nbsp;</a>
             {% endif %}
