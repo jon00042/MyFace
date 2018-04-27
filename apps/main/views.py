@@ -1,11 +1,6 @@
 import apps.main.models as m
 import django
 
-from _io import BufferedWriter
-import inspect
-from pprint import pprint
-from django.core.files.uploadedfile import InMemoryUploadedFile
-
 from django.contrib import messages
 from django.db.models.functions import Lower
 from django.shortcuts import redirect, render

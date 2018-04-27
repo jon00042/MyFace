@@ -28,5 +28,3 @@ urlpatterns = [
     path('followings_of/<int:following_user_id>', views.followings_of, name='followings_of'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-print(urlpatterns)
-
