@@ -2,13 +2,16 @@
 
 {% block sidebar %}
 <div class="text-right">
+    <div class="ml-3">
+        {% if request.session.logged_in_user_id == wall_user_id %}
+        <a href="{% url 'main:photo' %}"><img class="profile-pic" src="/media/user-photos/{{wall_user_id}}.jpg" alt=""/></a>
+        {% else %}
+        <img class="profile-pic" src="/media/user-photos/{{wall_user_id}}.jpg" alt=""/>
+        {% endif %}
+    </div>
     <h2 class="mt-2 mb-5">{{wall_username}}</h2>
     <div><a href="{% url 'main:followings_of' following_user_id=wall_user_id %}">Following</a></div>
     <div><a href="{% url 'main:followers_of' followed_user_id=wall_user_id %}">Followers</a></div>
-    <br>
-    <br>
-    <br>
-    <br>
     <br>
     <br>
     <br>

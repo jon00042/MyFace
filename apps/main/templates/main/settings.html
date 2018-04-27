@@ -1,10 +1,42 @@
 {% extends 'main/base.html' %}
 
 {% block sidebar %}
-<h1>sidebar</h1>
+<div class="text-right">
+    <h3 class="mt-2 mb-5">Settings for {{request.session.logged_in_username}}</h3>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+</div>
 {% endblock %}
 
 {% block content %}
-<h1>content</h1>
+<div class="container mt-4">
+    <div class="row pl-3 pb-2">
+        <h3>Update Account Info</h3>
+    </div>
+    <div class="row">
+        <form class="col-6" action="" method="POST">
+            {% csrf_token %}
+            <input type="email" class="form-control form-group" name="email" placeholder="Email">
+            <input type="text" class="form-control form-group" name="username" placeholder="Username">
+            <input type="password" class="form-control form-group" name="password" placeholder="Password">
+            <input type="password" class="form-control form-group" name="confirm" placeholder="Confirm">
+            <button type="submit" class="btn btn-primary form-group">Update</button>
+        </form>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger">{{message}}</div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
 

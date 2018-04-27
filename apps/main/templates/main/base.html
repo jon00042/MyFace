@@ -21,7 +21,7 @@
                     {% if request.session.logged_in_user_id %}
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">{{request.session.logged_in_username}}</a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <a class="dropdown-item" href="">Settings</a>
+                        <a class="dropdown-item" href="{% url 'main:settings' %}">Settings</a>
                         <a class="dropdown-item" href="{% url 'main:logout' %}">Logout</a>
                     </div>
                     {% else %}

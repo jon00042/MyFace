@@ -1,6 +1,11 @@
 import apps.main.models as m
 import django
 
+from _io import BufferedWriter
+import inspect
+from pprint import pprint
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
 from django.contrib import messages
 from django.db.models.functions import Lower
 from django.shortcuts import redirect, render
@@ -302,4 +307,28 @@ def settings(request):
     if (request.method != 'GET'):
         return redirect('main:index')
     return render(request, 'main/settings.html')
+
+def photo(request):
+    logged_in_user = get_logged_in_user(request)
+    if (not logged_in_user):
+        return redirect('main:index')
+    if (request.method == 'GET'):
+        return render(request, 'main/photo.html')
+    if (request.method != 'POST'):
+        return redirect('main:index')
+    if ('file' not in request.FILES):
+        messages.error(request, 'Must choose a file!')
+        return redirect('main:photo')
+    f = request.FILES['file']
+    if (f.content_type != 'image/jpeg'):
+        messages.error(request, 'Can only accept a jpeg!')
+        return redirect('main:photo')
+    if (f.size > 512 * 1024 * 1024):
+        messages.error(request, 'File cannot be larger than 512MB!')
+        return redirect('main:photo')
+    of = open('media/user-photos/{}.jpg'.format(logged_in_user.id), 'wb')
+    for chunk in f.chunks():
+        of.write(chunk)
+    of.close
+    return redirect('main:index')
 
